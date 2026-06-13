@@ -27,6 +27,7 @@ let reconnectTimer = null
 let reconnectAttempt = 0
 let manualDisconnect = false
 let connectPromise = null
+let connectTimer = null
 
 
 function clearReconnectTimer() {
@@ -520,8 +521,12 @@ function createNativeMqttClient(wsUrl, options) {
     connect() {
       manuallyClosed = false
 
+      // 【重要】微信小程序真机必须使用 wss:// 加密协议，URL 必须以 wss:// 开头
+      // 确保 wsUrl 已经是 wss:// 格式，否则自动转换
+      const safeUrl = String(wsUrl || '').replace(/^ws:\/\//i, 'wss://')
+      
       socketTask = uni.connectSocket({
-        url: wsUrl,
+        url: safeUrl,
         protocols: ['mqtt'],
         success() {},
         fail(error) {
@@ -650,13 +655,21 @@ export const mqttClient = {
     const settings = deviceStore.state.settings
     connectPromise = new Promise((resolve, reject) => {
       let settled = false
-      const connectTimer = setTimeout(() => {
+      const cleanup = () => {
+        if (connectTimer) {
+          clearTimeout(connectTimer)
+          connectTimer = null
+        }
+        connectPromise = null
+      }
+      
+      connectTimer = setTimeout(() => {
         if (settled) return
         settled = true
-        deviceStore.setMqttState(false, '连接超时', 'MQTT CONNACK超时')
+        cleanup()
+        deviceStore.setMqttState(false, '连接超时', 'MQTT CONNACK 超时')
         if (client) client.end(true)
         client = null
-        connectPromise = null
         reject(new Error('连接超时'))
         scheduleReconnect()
       }, deviceStore.getConnectTimeoutMs())
@@ -668,13 +681,14 @@ export const mqttClient = {
 
       client.on('connect', () => {
         clearTimeout(connectTimer)
+        connectTimer = null
         reconnectAttempt = 0
         deviceStore.setMqttState(true, '已连接', '')
         deviceStore.pushLog({ direction: 'sys', cmd: 'mqtt_connect', result: 'ok', payloadText: settings.wsUrl })
         subscribeTopics()
         if (!settled) {
           settled = true
-          connectPromise = null
+          cleanup()
           resolve()
         }
       })
@@ -688,13 +702,12 @@ export const mqttClient = {
       })
       client.on('message', handleIncomingMessage)
       client.on('error', (error) => {
-        const message = error && error.message ? error.message : 'MQTT连接异常'
+        const message = error && error.message ? error.message : 'MQTT 连接异常'
         deviceStore.setMqttState(false, '连接异常', message)
         deviceStore.pushLog({ direction: 'sys', cmd: 'mqtt_error', result: 'error', payloadText: message })
         if (!settled) {
           settled = true
-          clearTimeout(connectTimer)
-          connectPromise = null
+          cleanup()
           reject(error)
           scheduleReconnect()
         }
@@ -709,6 +722,10 @@ export const mqttClient = {
     clearReconnectTimer()
     if (client) client.end(true)
     client = null
+    if (connectTimer) {
+      clearTimeout(connectTimer)
+      connectTimer = null
+    }
     connectPromise = null
     Object.keys(pendingMap).forEach((key) => clearPending(key, false))
     pendingMap = {}
