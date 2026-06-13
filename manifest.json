@@ -1,0 +1,22 @@
+{
+  "name": "SC0479_4G_Controller_MP",
+  "appid": "__UNI__6709637",
+  "description": "SC0479 4G智能控制器微信小程序 V2.0",
+  "versionName": "2.0.0",
+  "versionCode": "200",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "wxc87fd030a7edf47c",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "enhance": true
+    },
+    "usingComponents": true,
+    "lazyCodeLoading": "requiredComponents"
+  },
+  "uniStatistics": {
+    "enable": false
+  },
+  "vueVersion": "3"
+}

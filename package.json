@@ -1,0 +1,7 @@
+{
+  "name": "sc0479-4g-controller-mp",
+  "version": "2.0.0",
+  "private": true,
+  "description": "SC0479 4G智能控制器微信小程序 V2.0",
+  "dependencies": {}
+}
