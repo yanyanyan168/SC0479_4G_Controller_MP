@@ -6,6 +6,8 @@
 
 export const PROTOCOL_VER = '2.0'
 /* 当前为联调Broker；正式服务器地址及后续变更方式待项目确认。 */
+// 【重要】微信小程序真机必须使用 wss:// 加密协议，且域名需在小程序后台配置白名单
+// 端口必须是 443（WSS 默认端口），不能使用其他端口
 export const DEFAULT_WS_URL = 'wss://broker.emqx.io:8084/mqtt'
 export const DEFAULT_TOPIC_ROOT = 'sc0479'
 export const DEVICE_ID_PATTERN = /^GW4G_[0-9]{9}$/

@@ -521,8 +521,12 @@ function createNativeMqttClient(wsUrl, options) {
     connect() {
       manuallyClosed = false
 
+      // 【重要】微信小程序真机必须使用 wss:// 加密协议，URL 必须以 wss:// 开头
+      // 确保 wsUrl 已经是 wss:// 格式，否则自动转换
+      const safeUrl = String(wsUrl || '').replace(/^ws:\/\//i, 'wss://')
+      
       socketTask = uni.connectSocket({
-        url: wsUrl,
+        url: safeUrl,
         protocols: ['mqtt'],
         success() {},
         fail(error) {
